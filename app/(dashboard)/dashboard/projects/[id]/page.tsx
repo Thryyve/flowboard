@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useParams } from "next/navigation";
-import { Plus, MessageSquare, User, Calendar } from "lucide-react";
+import { Plus, MessageSquare, User, Calendar, UserPlus, X } from "lucide-react";
 import { emitTaskCreated, emitTaskUpdated, useSocket } from "@/hooks/useSocket";
 
 interface Task {
@@ -54,6 +54,13 @@ export default function ProjectPage() {
   const [taskAssignee, setTaskAssignee] = useState("");
   const [creating, setCreating] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [memberEmail, setMemberEmail] = useState("");
+  const [memberRole, setMemberRole] = useState("MEMBER");
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteSuccess, setInviteSuccess] = useState("");
 
   useEffect(() => {
     fetchProject();
@@ -141,6 +148,35 @@ export default function ProjectPage() {
     }
   }
 
+  async function handleInviteMember() {
+    if (!memberEmail.trim()) return;
+    setInviting(true);
+    setInviteError("");
+    setInviteSuccess("");
+    try {
+      const res = await fetch(`/api/projects/${projectId}/members`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: memberEmail, role: memberRole }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInviteSuccess("Member added successfully");
+        setMemberEmail("");
+        fetchProject();
+      } else {
+        setInviteError(data.message);
+      }
+    } catch (err) {
+      setInviteError("Something went wrong");
+    } finally {
+      setInviting(false);
+    }
+  }
+
   async function handleStatusChange(taskId: string, status: "TODO" | "IN_PROGRESS" | "DONE") {
     try {
       const res = await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
@@ -196,13 +232,22 @@ export default function ProjectPage() {
             <p className="text-gray-400 text-sm mt-1">{project.description}</p>
           )}
         </div>
-        <button
-          onClick={() => setShowTaskModal(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus size={16} />
-          Add Task
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowMemberModal(true)}
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-gray-700"
+          >
+            <UserPlus size={16} />
+            Invite Member
+          </button>
+          <button
+            onClick={() => setShowTaskModal(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={16} />
+            Add Task
+          </button>
+        </div>
       </div>
 
       {/* Kanban Board */}
@@ -364,6 +409,63 @@ export default function ProjectPage() {
         </div>
       )}
 
+      {/* Invite Member Modal */}
+      {showMemberModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Invite Member</h3>
+              <button onClick={() => { setShowMemberModal(false); setInviteError(""); setInviteSuccess(""); }} className="text-gray-400 hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={memberEmail}
+                  onChange={(e) => setMemberEmail(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="teammate@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Role</label>
+                <select
+                  value={memberRole}
+                  onChange={(e) => setMemberRole(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="MEMBER">Member</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+
+              {inviteError && <p className="text-red-400 text-sm">{inviteError}</p>}
+              {inviteSuccess && <p className="text-green-400 text-sm">{inviteSuccess}</p>}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => { setShowMemberModal(false); setInviteError(""); setInviteSuccess(""); }}
+                className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInviteMember}
+                disabled={inviting}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
+              >
+                {inviting ? "Inviting..." : "Send Invite"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Task Detail Modal */}
       {selectedTask && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
