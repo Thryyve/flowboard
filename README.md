@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flowboard
+
+A full-stack SaaS project management tool for teams. Built with Next.js, TypeScript, PostgreSQL, Prisma, and Socket.io.
+
+## Live Demo
+[flowboard-smoky-seven.vercel.app](https://flowboard-smoky-seven.vercel.app)
+
+## Features
+- JWT Authentication with role-based access (Admin and Member)
+- Create and manage projects
+- Kanban board with tasks (To Do, In Progress, Done)
+- Real-time task updates with Socket.io
+- Invite team members to projects
+- Dashboard with analytics and charts
+- Assign tasks with priority levels
+- Comments on tasks
+- Fully responsive UI
+
+## Tech Stack
+- **Frontend** — Next.js 15, TypeScript, Tailwind CSS, Recharts
+- **Backend** — Next.js API Routes, Node.js
+- **Database** — PostgreSQL (Supabase)
+- **ORM** — Prisma
+- **Auth** — JWT, bcryptjs
+- **Real-time** — Socket.io
+- **Deployment** — Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js v20.19+
+- PostgreSQL database (Supabase)
 
+### Installation
+
+1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone git@github.com:Thryyve/flowboard.git
+cd flowboard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables — create a `.env` file in the root:
+DATABASE_URL="your-postgresql-url"
+JWT_SECRET="your-jwt-secret"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Push the database schema
+```bash
+npx prisma db push
+```
 
-## Learn More
+5. Run the development server
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+6. Open [http://localhost:3000](http://localhost:3000)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
+flowboard/
+├── app/
+│   ├── api/          # Backend API routes
+│   ├── (dashboard)/  # Protected dashboard pages
+│   ├── login/        # Login page
+│   └── register/     # Register page
+├── components/       # Reusable UI components
+├── context/          # React Context (Auth)
+├── hooks/            # Custom hooks (Socket.io)
+├── lib/              # Prisma client, auth middleware
+├── prisma/           # Database schema
+└── types/            # TypeScript types
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## API Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/auth/register | Register a new user |
+| POST | /api/auth/login | Login and get JWT token |
+| GET | /api/projects | Get all projects |
+| POST | /api/projects | Create a project |
+| GET | /api/projects/:id | Get a single project |
+| PATCH | /api/projects/:id | Update a project |
+| DELETE | /api/projects/:id | Delete a project |
+| POST | /api/projects/:id/members | Add a member |
+| GET | /api/projects/:id/tasks | Get all tasks |
+| POST | /api/projects/:id/tasks | Create a task |
+| PATCH | /api/projects/:id/tasks/:taskId | Update a task |
+| DELETE | /api/projects/:id/tasks/:taskId | Delete a task |
+| GET | /api/projects/:id/tasks/:taskId/comments | Get comments |
+| POST | /api/projects/:id/tasks/:taskId/comments | Add a comment |
+| GET | /api/stats | Get dashboard stats |
